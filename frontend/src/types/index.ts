@@ -129,3 +129,34 @@ export interface AlgorithmMetrics {
   path_cost: number
   success: boolean
 }
+
+// GPS & Geolocation Types
+export interface GPSPosition {
+  lat: number
+  lng: number
+  accuracy: number
+  heading?: number | null
+  speed?: number | null
+  timestamp: number
+}
+
+// Live Tracking & Navigation Cockpit Types
+export interface LiveTrackingState {
+  isActive: boolean
+  isPaused: boolean
+  isCompleted: boolean
+  progress: number // 0 to 1
+  currentCoord: Coordinates | null
+  heading: number // 0 to 360 degrees
+  currentSpeedKmh: number
+  distanceCoveredKm: number
+  distanceRemainingKm: number
+  etaRemainingMin: number
+  currentSegmentIndex: number
+  instruction: string
+  simulationSpeed: number // 1x, 2x, 5x, 10x
+  cameraFollow: boolean
+}
+
+// Map Layer Theme
+export type MapLayerType = 'streets' | 'dark' | 'satellite' | 'positron'

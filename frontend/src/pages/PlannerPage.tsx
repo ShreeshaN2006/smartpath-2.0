@@ -2,17 +2,21 @@ import { useState, useCallback } from 'react'
 import 'leaflet/dist/leaflet.css'
 import { Link } from 'react-router-dom'
 import { MapView } from '../components/map/MapView'
+import { MapToolbar } from '../components/map/MapToolbar'
 import { RouteControls } from '../components/routing/RouteControls'
 import { RouteResultCard, RouteComparison } from '../components/routing/RouteResultCard'
 import { WeatherCard, IncidentCard, TrafficCard } from '../components/intelligence/IntelligenceCards'
+import { LiveTrackingHUD } from '../components/navigation/LiveTrackingHUD'
 import { Tabs } from '../components/ui/Tabs'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 import { useQuery } from '@tanstack/react-query'
+import { useGeolocation } from '../hooks/useGeolocation'
+import { useLiveTracking } from '../hooks/useLiveTracking'
 import { api } from '../lib/api'
 import { cn } from '../lib/utils'
-import type { Coordinates, RouteResponse, VehicleType, RoutingMode, RouteExplanation } from '../types'
-import { Navigation, AlertTriangle, Layers, MapPin } from 'lucide-react'
+import type { Coordinates, RouteResponse, VehicleType, RoutingMode, RouteExplanation, MapLayerType } from '../types'
+import { Navigation, AlertTriangle, Layers, MapPin, LocateFixed, Play } from 'lucide-react'
 
 const DEFAULT_CENTER: Coordinates = { lat: 12.9716, lng: 77.5946 }
 const DEFAULT_ZOOM = 13
@@ -35,6 +39,25 @@ export function PlannerPage() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [showComparison, setShowComparison] = useState(false)
   const [activeTab, setActiveTab] = useState<string>('metrics')
+  const [mapLayer, setMapLayer] = useState<MapLayerType>('streets')
+
+  // GPS Geolocation Hook
+  const {
+    position: gpsPosition,
+    isLoading: isLocatingGps,
+    getCurrentLocation: fetchGpsLocation,
+  } = useGeolocation()
+
+  // Live Navigation & Cockpit Tracking Hook
+  const {
+    trackingState,
+    startTracking,
+    pauseTracking,
+    resumeTracking,
+    stopTracking,
+    setSimulationSpeed,
+    toggleCameraFollow,
+  } = useLiveTracking(route)
 
   const { data: weather, isLoading: weatherLoading } = useQuery({
     queryKey: ['weather', center.lat, center.lng],
@@ -55,6 +78,32 @@ export function PlannerPage() {
     staleTime: 1000 * 60 * 5,
   })
 
+  // Handle GPS location click
+  const handleLocateMe = useCallback(async () => {
+    try {
+      const pos = await fetchGpsLocation()
+      setCenter({ lat: pos.lat, lng: pos.lng })
+      setZoom(15)
+      addToast(`GPS locked: ${pos.lat.toFixed(4)}, ${pos.lng.toFixed(4)} (±${pos.accuracy}m)`, 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Could not acquire GPS position', 'error')
+    }
+  }, [fetchGpsLocation, addToast])
+
+  // Handle setting current GPS as route source
+  const handleUseGpsAsSource = useCallback(async () => {
+    try {
+      const pos = await fetchGpsLocation()
+      const gpsCoord = { lat: pos.lat, lng: pos.lng }
+      setSource(gpsCoord)
+      setCenter(gpsCoord)
+      setZoom(15)
+      addToast('Real GPS location set as Route Source!', 'success')
+    } catch (err) {
+      addToast(err instanceof Error ? err.message : 'Could not acquire GPS position', 'error')
+    }
+  }, [fetchGpsLocation, addToast])
+
   const handleMapClick = useCallback((lat: number, lng: number) => {
     const coord = { lat, lng }
     switch (currentMode) {
@@ -72,7 +121,7 @@ export function PlannerPage() {
         break
       case 'blockage':
         setBlockedCoords((prev) => [...prev, coord])
-        addToast(`Blockage placed: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, 'warning')
+        addToast(`Road blockage placed: ${lat.toFixed(5)}, ${lng.toFixed(5)}`, 'warning')
         break
     }
     setCurrentMode(null)
@@ -159,7 +208,7 @@ export function PlannerPage() {
           safest: { label: 'Safest', eta_min: Number((totalEta * 1.15).toFixed(1)), distance_km: Number((totalDistance * 1.08).toFixed(1)), risk_level: 'very_low', reliability: 0.95 },
         },
       })
-      addToast('Route calculated successfully!', 'success')
+      addToast('Optimal route calculated successfully!', 'success')
     } catch (error) {
       addToast(`Failed to calculate route: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error')
     } finally {
@@ -196,37 +245,39 @@ export function PlannerPage() {
     setShowComparison(false)
     setCurrentMode(null)
     setTrafficMultiplier(1.0)
+    stopTracking()
     addToast('All cleared', 'info')
   }
 
   const modeButtons = [
-    { mode: 'source' as const, label: 'Set Source', icon: <MapPin className="w-4 h-4" /> },
-    { mode: 'destination' as const, label: 'Set Destination', icon: <MapPin className="w-4 h-4" /> },
-    { mode: 'waypoint' as const, label: 'Add Waypoint', icon: <Layers className="w-4 h-4" /> },
-    { mode: 'blockage' as const, label: 'Add Blockage', icon: <AlertTriangle className="w-4 h-4" /> },
+    { mode: 'source' as const, label: 'Set Source', icon: <MapPin className="w-4 h-4 text-emerald-600" /> },
+    { mode: 'destination' as const, label: 'Set Destination', icon: <MapPin className="w-4 h-4 text-rose-600" /> },
+    { mode: 'waypoint' as const, label: 'Add Waypoint', icon: <Layers className="w-4 h-4 text-violet-600" /> },
+    { mode: 'blockage' as const, label: 'Add Blockage', icon: <AlertTriangle className="w-4 h-4 text-amber-600" /> },
   ]
 
   return (
     <div className="h-screen flex flex-col bg-neutral-50">
-      <header className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-6">
+      {/* App Header */}
+      <header className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-6 z-20">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-xs">
               <Navigation className="w-5 h-5 text-white" />
             </div>
             <span className="text-heading-m font-bold bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent">
               SmartPath
             </span>
           </Link>
-          <div className="hidden md:flex items-center gap-1 ml-8 border-l border-neutral-200 pl-8">
+          <div className="hidden md:flex items-center gap-1 ml-6 border-l border-neutral-200 pl-6">
             {modeButtons.map(({ mode: m, label, icon }) => (
               <button
                 key={m}
                 onClick={() => setCurrentMode(currentMode === m ? null : m)}
                 className={cn(
-                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all',
+                  'flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
                   currentMode === m
-                    ? 'bg-brand-primary/10 text-brand-primary font-semibold'
+                    ? 'bg-brand-primary/10 text-brand-primary font-bold shadow-xs'
                     : 'text-neutral-600 hover:bg-neutral-100'
                 )}
               >
@@ -236,18 +287,30 @@ export function PlannerPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg border border-green-100">
-            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-xs font-semibold text-success uppercase tracking-wider">System Online</span>
+        <div className="flex items-center gap-3">
+          {/* Real-time GPS status indicator */}
+          <button
+            onClick={handleLocateMe}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all hover:border-brand-primary/40 bg-neutral-50 text-neutral-700"
+          >
+            <LocateFixed className={cn('w-3.5 h-3.5', isLocatingGps ? 'animate-spin text-brand-primary' : 'text-emerald-600')} />
+            {gpsPosition ? `GPS: ±${gpsPosition.accuracy}m` : 'Locate GPS'}
+          </button>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Live System</span>
           </div>
+
           <Link to="/">
-            <Button variant="ghost" size="sm">Back to Home</Button>
+            <Button variant="ghost" size="sm" className="text-xs">Back to Home</Button>
           </Link>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      {/* Main Workspace */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left Sidebar Controls */}
         <aside className="w-80 lg:w-88 border-r border-neutral-200 bg-white flex flex-col overflow-y-auto z-10 shadow-sm">
           <RouteControls
             source={source}
@@ -258,6 +321,8 @@ export function PlannerPage() {
             mode={mode}
             trafficMultiplier={trafficMultiplier}
             isLoading={isCalculating}
+            route={route}
+            liveTracking={trackingState}
             onSetSource={() => setCurrentMode(currentMode === 'source' ? null : 'source')}
             onSetDestination={() => setCurrentMode(currentMode === 'destination' ? null : 'destination')}
             onAddWaypoint={() => setCurrentMode(currentMode === 'waypoint' ? null : 'waypoint')}
@@ -268,6 +333,8 @@ export function PlannerPage() {
             onCompare={handleCompare}
             onClearAll={clearAll}
             onLoadDemo={loadDemoRoute}
+            onUseGpsAsSource={handleUseGpsAsSource}
+            onStartLiveNavigation={trackingState.isActive ? resumeTracking : startTracking}
             onVehicleChange={setVehicle}
             onModeChange={setMode}
             onTrafficChange={setTrafficMultiplier}
@@ -275,6 +342,7 @@ export function PlannerPage() {
           />
         </aside>
 
+        {/* Center Map Canvas */}
         <div className="flex-1 relative min-w-0">
           <MapView
             center={center}
@@ -284,11 +352,48 @@ export function PlannerPage() {
             waypoints={waypoints}
             route={route}
             blockedCoords={blockedCoords}
+            gpsPosition={gpsPosition}
+            liveTracking={trackingState}
+            vehicle={vehicle}
+            mapLayer={mapLayer}
             onMapClick={handleMapClick}
             onBoundsChange={handleBoundsChange}
           />
 
-          <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:top-auto md:w-96 max-h-[85vh] overflow-y-auto z-[1000] shadow-2xl rounded-2xl bg-white/95 backdrop-blur-md border border-neutral-200/80">
+          {/* Floating Map Toolbar (GPS Locate, Layer Switcher, Fit) */}
+          <div className="absolute top-4 right-4 z-[1000]">
+            <MapToolbar
+              currentLayer={mapLayer}
+              onSelectLayer={setMapLayer}
+              onLocateMe={handleLocateMe}
+              isLocating={isLocatingGps}
+              onFitBounds={() => {
+                if (source && destination) {
+                  setCenter({ lat: (source.lat + destination.lat) / 2, lng: (source.lng + destination.lng) / 2 })
+                  setZoom(13)
+                }
+              }}
+            />
+          </div>
+
+          {/* Floating Live Tracking HUD (Cockpit & Turn-by-Turn) */}
+          {(trackingState.isActive || trackingState.isPaused || trackingState.isCompleted) && (
+            <div className="absolute top-4 left-4 right-16 md:left-auto md:right-20 md:w-96 z-[1000] animate-in fade-in slide-in-from-top-4 duration-300">
+              <LiveTrackingHUD
+                tracking={trackingState}
+                vehicle={vehicle}
+                onStart={startTracking}
+                onPause={pauseTracking}
+                onResume={resumeTracking}
+                onStop={stopTracking}
+                onSpeedChange={setSimulationSpeed}
+                onToggleCamera={toggleCameraFollow}
+              />
+            </div>
+          )}
+
+          {/* Floating Route Details & Intelligence Panel */}
+          <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-96 max-h-[75vh] overflow-y-auto z-[1000] shadow-2xl rounded-2xl bg-white/95 backdrop-blur-md border border-neutral-200/90">
             <Tabs defaultTab={activeTab} onChange={(tabId: string) => setActiveTab(tabId)} tabs={[
               { id: 'metrics', label: 'Route Details' },
               { id: 'intelligence', label: 'Intelligence' },
@@ -298,7 +403,10 @@ export function PlannerPage() {
                 <RouteResultCard
                   route={route}
                   explanation={explanation ?? undefined}
-                  onUseRoute={() => addToast('Route activated for navigation', 'success')}
+                  onUseRoute={() => {
+                    startTracking()
+                    addToast('Live navigation tracking started!', 'success')
+                  }}
                   onViewAlternatives={() => { setShowComparison(true); setActiveTab('comparison') }}
                   isLoading={isCalculating}
                 />

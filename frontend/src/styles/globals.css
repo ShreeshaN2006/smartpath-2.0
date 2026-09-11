@@ -100,6 +100,12 @@
     animation: delivery-pulse 1s infinite;
   }
 
+  .live-tracking-vehicle-icon,
+  .gps-pulse-marker {
+    background: none !important;
+    border: none !important;
+  }
+
   @keyframes delivery-pulse {
     0%, 100% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.6); }
     50% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.9); }
