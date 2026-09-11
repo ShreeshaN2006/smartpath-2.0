@@ -1,23 +1,5 @@
 @import "tailwindcss/tailwind.css";
 
-@theme {
-  --color-brand-primary: #163359;
-  --color-brand-secondary: #2F5C93;
-  --color-brand-accent: #C83616;
-  --color-neutral-0: #FFFFFF;
-  --color-neutral-50: #F7F8F8;
-  --color-neutral-100: #F1F2F2;
-  --color-neutral-200: #E4E7E8;
-  --color-neutral-300: #AAB6BD;
-  --color-neutral-500: #899A9A;
-  --color-neutral-700: #4B4148;
-  --color-neutral-900: #0B0A0C;
-  --color-success: #16866A;
-  --color-warning: #B7791F;
-  --color-danger: #C83616;
-  --color-info: #2F5C93;
-}
-
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;
@@ -31,127 +13,106 @@
   }
 
   body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--color-neutral-0);
-    color: var(--color-neutral-900);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    background: #090d16;
+    color: #0f172a;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
 
-  ::-webkit-scrollbar {
-    width: 6px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.2);
-    border-radius: 3px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(148, 163, 184, 0.35);
+  h1, h2, h3, h4, .font-heading {
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
-  }
-
-  .leaflet-container {
-    background: var(--color-neutral-0);
-    font-family: 'Inter', system-ui, sans-serif;
-  }
-
-  .leaflet-tile-pane {
-    filter: brightness(0.95) contrast(1.05) saturate(0.8);
-  }
-
-  .custom-marker {
-    background: none !important;
-    border: none !important;
-  }
-
-  .waypoint-badge {
-    width: 24px;
-    height: 24px;
-    background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-    border-radius: 50%;
-    border: 2px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 800;
-    color: white;
-    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.5);
+  code, pre, .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
 
-  .delivery-marker {
-    width: 20px;
-    height: 20px;
-    background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.6);
-    animation: delivery-pulse 1s infinite;
+  /* Custom Sleek Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.04);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.25);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.45);
   }
 
+  /* Map Container Stylings */
+  .leaflet-container {
+    background: #0f172a;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .custom-marker,
   .live-tracking-vehicle-icon,
   .gps-pulse-marker {
     background: none !important;
     border: none !important;
   }
 
-  @keyframes delivery-pulse {
-    0%, 100% { box-shadow: 0 0 12px rgba(99, 102, 241, 0.6); }
-    50% { box-shadow: 0 0 24px rgba(99, 102, 241, 0.9); }
+  /* Keyframe Animations */
+  @keyframes ping-slow {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(0.95); opacity: 0; }
   }
 
-  .status-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--color-success);
-    animation: pulse-dot 2s infinite;
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+    50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.8); }
   }
 
-  @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-    50% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(1000%); }
   }
 
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
   }
+}
 
-  @keyframes toast-in {
-    from { opacity: 0; transform: translateX(40px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
+/* Glassmorphism and Telemetry Utility Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.07), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
 
-  @keyframes toast-out {
-    from { opacity: 1; transform: translateX(0); }
-    to { opacity: 0; transform: translateX(40px); }
-  }
+.glass-hud {
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 20px rgba(99, 102, 241, 0.15);
+}
 
-  .focus-visible:focus {
-    outline: 2px solid var(--color-brand-primary);
-    outline-offset: 2px;
-  }
+.glass-dark {
+  background: rgba(9, 13, 22, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
 
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
-  }
+.neon-glow-primary {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+}
+
+.neon-glow-emerald {
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+}
+
+.neon-glow-danger {
+  box-shadow: 0 0 20px rgba(244, 63, 94, 0.35);
 }

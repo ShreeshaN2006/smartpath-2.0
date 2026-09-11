@@ -1,4 +1,14 @@
-import { AlertTriangle, CloudRain, Wind, Thermometer, Activity, Truck, Car, Ambulance } from 'lucide-react'
+import {
+  AlertTriangle,
+  CloudRain,
+  Wind,
+  Thermometer,
+  Activity,
+  Sun,
+  CloudLightning,
+  CloudFog,
+  ShieldCheck
+} from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { cn } from '../../lib/utils'
@@ -9,102 +19,70 @@ interface WeatherCardProps {
   isLoading?: boolean
 }
 
-const weatherCodeMap: Record<number, { label: string; icon: React.ReactNode }> = {
-  0: { label: 'Clear sky', icon: <Activity className="w-5 h-5 text-yellow-500" /> },
-  1: { label: 'Mainly clear', icon: <Activity className="w-5 h-5 text-yellow-500" /> },
-  2: { label: 'Partly cloudy', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  3: { label: 'Overcast', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  45: { label: 'Fog', icon: <CloudRain className="w-5 h-5 text-neutral-500" /> },
-  48: { label: 'Depositing rime fog', icon: <CloudRain className="w-5 h-5 text-neutral-500" /> },
-  51: { label: 'Light drizzle', icon: <CloudRain className="w-5 h-5 text-blue-400" /> },
-  53: { label: 'Moderate drizzle', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  55: { label: 'Dense drizzle', icon: <CloudRain className="w-5 h-5 text-blue-600" /> },
-  61: { label: 'Slight rain', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  63: { label: 'Moderate rain', icon: <CloudRain className="w-5 h-5 text-blue-600" /> },
-  65: { label: 'Heavy rain', icon: <CloudRain className="w-5 h-5 text-blue-700" /> },
-  71: { label: 'Slight snow', icon: <CloudRain className="w-5 h-5 text-blue-300" /> },
-  73: { label: 'Moderate snow', icon: <CloudRain className="w-5 h-5 text-blue-400" /> },
-  75: { label: 'Heavy snow', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  80: { label: 'Slight rain showers', icon: <CloudRain className="w-5 h-5 text-blue-400" /> },
-  81: { label: 'Moderate rain showers', icon: <CloudRain className="w-5 h-5 text-blue-500" /> },
-  82: { label: 'Violent rain showers', icon: <CloudRain className="w-5 h-5 text-blue-700" /> },
-  95: { label: 'Thunderstorm', icon: <Activity className="w-5 h-5 text-yellow-600" /> },
-  96: { label: 'Thunderstorm with hail', icon: <Activity className="w-5 h-5 text-yellow-700" /> },
-  99: { label: 'Thunderstorm with heavy hail', icon: <Activity className="w-5 h-5 text-yellow-800" /> },
+const weatherCodeMap: Record<number, { label: string; icon: React.ReactNode; color: string }> = {
+  0: { label: 'Clear Sky', icon: <Sun className="w-5 h-5 text-amber-500 animate-spin-slow" />, color: 'text-amber-500' },
+  1: { label: 'Mainly Clear', icon: <Sun className="w-5 h-5 text-amber-400" />, color: 'text-amber-400' },
+  2: { label: 'Partly Cloudy', icon: <CloudRain className="w-5 h-5 text-sky-400" />, color: 'text-sky-400' },
+  3: { label: 'Overcast', icon: <CloudRain className="w-5 h-5 text-slate-400" />, color: 'text-slate-400' },
+  45: { label: 'Foggy', icon: <CloudFog className="w-5 h-5 text-slate-400" />, color: 'text-slate-400' },
+  61: { label: 'Light Rain', icon: <CloudRain className="w-5 h-5 text-blue-400" />, color: 'text-blue-400' },
+  65: { label: 'Heavy Rain', icon: <CloudRain className="w-5 h-5 text-blue-600" />, color: 'text-blue-600' },
+  95: { label: 'Thunderstorm', icon: <CloudLightning className="w-5 h-5 text-purple-500" />, color: 'text-purple-500' },
 }
 
 export function WeatherCard({ weather, isLoading }: WeatherCardProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary" />
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-white/90 rounded-2xl border border-neutral-100 flex items-center justify-center h-28">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-500 border-t-transparent" />
+      </div>
     )
   }
 
   if (!weather) {
     return (
-      <Card>
-        <CardContent className="text-center py-8 text-neutral-500">
-          Weather data unavailable
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-white/90 rounded-2xl border border-neutral-100 text-center text-xs text-slate-400">
+        Live weather sensor offline
+      </div>
     )
   }
 
-  const condition = weatherCodeMap[weather.weather_code] || { label: 'Unknown', icon: <Activity className="w-5 h-5" /> }
+  const condition = weatherCodeMap[weather.weather_code] || {
+    label: 'Optimal Weather',
+    icon: <Sun className="w-5 h-5 text-amber-500" />,
+    color: 'text-amber-500',
+  }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-heading-s flex items-center gap-2">
-          <CloudRain className="w-5 h-5 text-brand-primary" />
-          Current Weather
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="text-4xl">{condition.icon}</div>
+    <div className="p-3.5 bg-white/95 rounded-2xl border border-neutral-100/80 shadow-xs space-y-3">
+      <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+        <div className="flex items-center gap-2">
+          {condition.icon}
           <div>
-            <p className="text-heading-m font-bold text-neutral-900">{condition.label}</p>
-            <p className="text-sm text-neutral-500">Code: {weather.weather_code}</p>
+            <h4 className="text-xs font-bold text-slate-800 font-heading leading-tight">{condition.label}</h4>
+            <p className="text-[10px] text-slate-400 font-mono">Live Bangalore Telemetry</p>
           </div>
         </div>
+        <span className="text-sm font-black font-mono text-slate-800">
+          {weather.temperature_c.toFixed(1)}°C
+        </span>
+      </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-neutral-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-neutral-500 mb-1">
-              <Thermometer className="w-4 h-4" />
-              Temperature
-            </div>
-            <p className="text-heading-s font-bold text-brand-primary">{weather.temperature_c.toFixed(1)}°C</p>
-          </div>
-          <div className="p-3 bg-neutral-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-neutral-500 mb-1">
-              <CloudRain className="w-4 h-4" />
-              Precipitation
-            </div>
-            <p className="text-heading-s font-bold text-info">{weather.precipitation_mm.toFixed(1)} mm</p>
-          </div>
-          <div className="p-3 bg-neutral-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-neutral-500 mb-1">
-              <Wind className="w-4 h-4" />
-              Wind Speed
-            </div>
-            <p className="text-heading-s font-bold text-brand-secondary">{weather.wind_speed_kmh.toFixed(1)} km/h</p>
-          </div>
-          <div className="p-3 bg-neutral-50 rounded-lg">
-            <div className="flex items-center gap-2 text-sm text-neutral-500 mb-1">
-              <AlertTriangle className="w-4 h-4" />
-              Risk Impact
-            </div>
-            <p className="text-heading-s font-bold text-warning">Moderate</p>
-          </div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between">
+          <span className="text-slate-500 flex items-center gap-1 text-[11px]">
+            <Wind className="w-3.5 h-3.5 text-indigo-500" /> Wind
+          </span>
+          <span className="font-mono font-bold text-slate-800">{weather.wind_speed_kmh.toFixed(0)} km/h</span>
         </div>
-      </CardContent>
-    </Card>
+        <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between">
+          <span className="text-slate-500 flex items-center gap-1 text-[11px]">
+            <CloudRain className="w-3.5 h-3.5 text-sky-500" /> Precip
+          </span>
+          <span className="font-mono font-bold text-slate-800">{weather.precipitation_mm.toFixed(1)} mm</span>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -116,54 +94,45 @@ interface IncidentCardProps {
 export function IncidentCard({ incidents, isLoading }: IncidentCardProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary" />
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-white/90 rounded-2xl border border-neutral-100 flex items-center justify-center h-28">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-amber-500 border-t-transparent" />
+      </div>
     )
   }
 
   if (incidents.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-8 text-neutral-500">
-          No active incidents
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-emerald-50/60 rounded-2xl border border-emerald-100 text-center flex items-center justify-center gap-2 text-xs text-emerald-700 font-medium">
+        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        No active hazard incidents on primary arteries
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-heading-s flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-warning" />
-          Active Incidents ({incidents.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3 max-h-60 overflow-y-auto">
-          {incidents.map((incident) => (
-            <div key={incident.id} className="p-3 bg-neutral-50 rounded-lg border border-neutral-200">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                  <p className="font-medium text-neutral-900 capitalize">{incident.type.replace('_', ' ')}</p>
-                  <p className="text-sm text-neutral-500">Edge: {incident.edge_id}</p>
-                </div>
-                <Badge variant={incident.severity > 0.7 ? 'danger' : incident.severity > 0.4 ? 'warning' : 'info'} size="sm">
-                  Severity: {(incident.severity * 100).toFixed(0)}%
-                </Badge>
-              </div>
-              <div className="mt-2 flex items-center gap-4 text-xs text-neutral-500">
-                <span>Started: {new Date(incident.started_at).toLocaleTimeString()}</span>
-                {incident.expires_at && <span>Expires: {new Date(incident.expires_at).toLocaleTimeString()}</span>}
-              </div>
-            </div>
-          ))}
+    <div className="p-3.5 bg-white/95 rounded-2xl border border-neutral-100/80 shadow-xs space-y-2.5">
+      <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+        <div className="flex items-center gap-1.5">
+          <AlertTriangle className="w-4 h-4 text-amber-500" />
+          <h4 className="text-xs font-bold text-slate-800 font-heading">Road Incidents ({incidents.length})</h4>
         </div>
-      </CardContent>
-    </Card>
+        <span className="text-[10px] font-mono text-amber-600 font-bold uppercase">Dynamic DFS Detours</span>
+      </div>
+
+      <div className="space-y-2 max-h-48 overflow-y-auto">
+        {incidents.map((inc) => (
+          <div key={inc.id} className="p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-slate-800 capitalize">{inc.type.replace('_', ' ')}</span>
+              <Badge variant={inc.severity > 2 ? 'danger' : 'warning'} size="sm" className="text-[10px]">
+                Level {inc.severity} Severity
+              </Badge>
+            </div>
+            <p className="text-[11px] font-mono text-slate-500 mt-1">Corridor: {inc.edge_id.replace('_', ' ')}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -175,65 +144,48 @@ interface TrafficCardProps {
 export function TrafficCard({ traffic, isLoading }: TrafficCardProps) {
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-32">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary" />
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-white/90 rounded-2xl border border-neutral-100 flex items-center justify-center h-28">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-500 border-t-transparent" />
+      </div>
     )
   }
 
   if (traffic.length === 0) {
     return (
-      <Card>
-        <CardContent className="text-center py-8 text-neutral-500">
-          No traffic data available
-        </CardContent>
-      </Card>
+      <div className="p-4 bg-white/90 rounded-2xl border border-neutral-100 text-center text-xs text-slate-400">
+        Traffic sensors initializing...
+      </div>
     )
   }
 
-  const avgCongestion = traffic.reduce((sum, t) => sum + t.congestion, 0) / traffic.length
+  const avgSpeed = Math.round(traffic.reduce((sum, t) => sum + t.current_speed_kmh, 0) / traffic.length)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-heading-s flex items-center gap-2">
-          <Activity className="w-5 h-5 text-brand-primary" />
-          Traffic Overview
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="mb-4">
-          <div className="flex items-center justify-between text-sm mb-1">
-            <span className="font-medium text-neutral-700">Average Congestion</span>
-            <span className="font-mono text-brand-primary">{(avgCongestion * 100).toFixed(1)}%</span>
-          </div>
-          <div className="h-2 bg-neutral-200 rounded-full overflow-hidden">
-            <div
-              className={cn('h-full transition-all duration-500', avgCongestion > 0.7 ? 'bg-danger' : avgCongestion > 0.4 ? 'bg-warning' : 'bg-success')}
-              style={{ width: `${avgCongestion * 100}%` }}
-            />
-          </div>
+    <div className="p-3.5 bg-white/95 rounded-2xl border border-neutral-100/80 shadow-xs space-y-2.5">
+      <div className="flex items-center justify-between pb-2 border-b border-neutral-100">
+        <div className="flex items-center gap-1.5">
+          <Activity className="w-4 h-4 text-indigo-600" />
+          <h4 className="text-xs font-bold text-slate-800 font-heading">Traffic Velocity Feed</h4>
         </div>
+        <span className="text-xs font-mono font-bold text-indigo-600">Avg {avgSpeed} km/h</span>
+      </div>
 
-        <div className="space-y-2 max-h-48 overflow-y-auto">
-          {traffic.slice(0, 10).map((t) => (
-            <div key={t.edge_id} className="flex items-center justify-between text-sm p-2 bg-neutral-50 rounded">
-              <span className="font-mono text-neutral-600">{t.edge_id.slice(0, 20)}...</span>
-              <div className="flex items-center gap-2">
-                <span className={cn('font-mono', t.congestion > 0.7 ? 'text-danger' : t.congestion > 0.4 ? 'text-warning' : 'text-success')}>
-                  {(t.congestion * 100).toFixed(0)}%
-                </span>
-                <span className="text-neutral-500">{t.current_speed_kmh.toFixed(0)} km/h</span>
-              </div>
+      <div className="space-y-1.5 max-h-44 overflow-y-auto">
+        {traffic.map((t) => (
+          <div key={t.edge_id} className="flex items-center justify-between p-2 bg-neutral-50 rounded-xl text-xs">
+            <span className="font-mono text-slate-700 font-medium">{t.edge_id.replace('e10', 'Link #').slice(0, 16)}</span>
+            <div className="flex items-center gap-2">
+              <span className={cn(
+                'text-[11px] font-mono font-bold',
+                t.congestion > 0.6 ? 'text-rose-600' : t.congestion > 0.35 ? 'text-amber-600' : 'text-emerald-600'
+              )}>
+                {t.current_speed_kmh} km/h
+              </span>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.congestion > 0.6 ? '#f43f5e' : t.congestion > 0.35 ? '#f59e0b' : '#10b981' }} />
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
-
-
-
