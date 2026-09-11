@@ -10,6 +10,7 @@ export interface RouteRequest {
   mode: RoutingMode
   depart_at?: string
   waypoints?: Coordinates[]
+  blocked_coords?: Coordinates[]
 }
 
 export interface RouteResponse {

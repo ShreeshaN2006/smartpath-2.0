@@ -28,6 +28,7 @@ interface RouteControlsProps {
   onVehicleChange: (vehicle: VehicleType) => void
   onModeChange: (mode: RoutingMode) => void
   onTrafficChange: (value: number) => void
+  onLoadDemo?: () => void
   currentMode: 'source' | 'destination' | 'waypoint' | 'blockage' | null
 }
 
@@ -66,6 +67,7 @@ export function RouteControls({
   onVehicleChange,
   onModeChange,
   onTrafficChange,
+  onLoadDemo,
   currentMode,
 }: RouteControlsProps) {
   const [showAdvanced, setShowAdvanced] = useState(false)
@@ -179,6 +181,18 @@ export function RouteControls({
             disabled={isLoading}
           />
         </div>
+
+        {onLoadDemo && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onLoadDemo}
+            disabled={isLoading}
+            className="w-full text-brand-primary border-brand-primary/30 hover:bg-brand-primary/10 font-semibold"
+          >
+            ⚡ Load Sample Route (Bangalore)
+          </Button>
+        )}
 
         <Button
           onClick={onCalculateRoute}
