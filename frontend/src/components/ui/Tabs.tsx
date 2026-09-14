@@ -13,7 +13,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
 
     return (
       <div ref={ref} className={cn(className)} {...props}>
-        <div className="flex gap-1 bg-neutral-100 rounded-lg p-1 mb-4" role="tablist">
+        <div className="flex gap-1 bg-neutral-100 rounded-xl p-1 mb-4" role="tablist">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -24,7 +24,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(
                 onChange?.(tab.id)
               }}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200',
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                 activeTab === tab.id
                   ? 'bg-white text-brand-primary shadow-sm'
                   : 'text-neutral-500 hover:text-neutral-700'

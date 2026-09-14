@@ -1,6 +1,6 @@
-import { MapContainer, TileLayer, Marker, Popup, Circle, CircleMarker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, CircleMarker, useMapEvents } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import type { Coordinates, RouteResponse, GPSPosition, LiveTrackingState, VehicleType, MapLayerType } from '../../types'
 
@@ -163,12 +163,12 @@ function LiveVehicleMarker({
       map.panTo([coord.lat, coord.lng], { animate: true, duration: 0.2 })
     }
 
-    return () => {
+return () => {
       if (markerRef.current) {
         map.removeLayer(markerRef.current)
         markerRef.current = null
       }
-    }
+    };
   }, [coord.lat, coord.lng, heading, cameraFollow, map])
 
   return null
@@ -248,6 +248,7 @@ export function MapView({
 }: MapViewProps) {
   const mapRef = useRef<L.Map | null>(null)
 
+  // Handle map click
   const ClickHandler = () => {
     useMapEvents({
       click(e: any) {
@@ -257,19 +258,20 @@ export function MapView({
     return null
   }
 
+  // Handle bounds change
   const BoundsHandler = () => {
     useMapEvents({
       moveend() {
         if (mapRef.current) {
           const bounds = mapRef.current.getBounds()
-          const c = mapRef.current.getCenter()
+          const center = mapRef.current.getCenter()
           onBoundsChange({
             north: bounds.getNorth(),
             south: bounds.getSouth(),
             east: bounds.getEast(),
             west: bounds.getWest(),
-            center_lat: c.lat,
-            center_lon: c.lng,
+            center_lat: center.lat,
+            center_lon: center.lng,
           })
         }
       },
@@ -280,92 +282,94 @@ export function MapView({
   const selectedTile = tileLayerUrls[mapLayer] || tileLayerUrls.streets
 
   return (
-    <MapContainer
-      ref={mapRef}
-      center={[center.lat, center.lng]}
-      zoom={zoom}
-      scrollWheelZoom={true}
-      className="w-full h-full"
-      attributionControl={false}
-    >
-      <TileLayer
-        key={mapLayer}
-        url={selectedTile.url}
-        attribution={selectedTile.attribution}
-        maxZoom={19}
-      />
+    <div className="map-container w-full h-full">
+      <MapContainer
+        ref={mapRef}
+        center={[center.lat, center.lng]}
+        zoom={zoom}
+        scrollWheelZoom={true}
+        className="w-full h-full"
+        attributionControl={false}
+      >
+        <TileLayer
+          key={mapLayer}
+          url={selectedTile.url}
+          attribution={selectedTile.attribution}
+          maxZoom={19}
+        />
 
-      <ClickHandler />
-      <BoundsHandler />
+        <ClickHandler />
+        <BoundsHandler />
 
-      {/* GPS Position Marker & Accuracy Halo */}
-      {gpsPosition && (
-        <>
-          <MapMarker
-            position={{ lat: gpsPosition.lat, lng: gpsPosition.lng }}
-            icon={gpsIcon}
-            zIndexOffset={900}
-            popup={`<strong>📍 Your GPS Location</strong><br/>Accuracy: ±${gpsPosition.accuracy}m`}
-          />
-          {gpsPosition.accuracy > 0 && (
-            <Circle
-              center={[gpsPosition.lat, gpsPosition.lng]}
-              radius={Math.min(500, gpsPosition.accuracy)}
-              pathOptions={{
-                color: '#3b82f6',
-                fillColor: '#3b82f6',
-                fillOpacity: 0.12,
-                weight: 1.5,
-                dashArray: '4, 4',
-              }}
+        {/* GPS Position Marker & Accuracy Halo */}
+        {gpsPosition && (
+          <>
+            <MapMarker
+              position={{ lat: gpsPosition.lat, lng: gpsPosition.lng }}
+              icon={gpsIcon}
+              zIndexOffset={900}
+              popup={`<strong>📍 Your GPS Location</strong><br/>Accuracy: ±${gpsPosition.accuracy}m`}
             />
-          )}
-        </>
-      )}
+            {gpsPosition.accuracy > 0 && (
+              <Circle
+                center={[gpsPosition.lat, gpsPosition.lng]}
+                radius={Math.min(500, gpsPosition.accuracy)}
+                pathOptions={{
+                  color: '#3b82f6',
+                  fillColor: '#3b82f6',
+                  fillOpacity: 0.12,
+                  weight: 1.5,
+                  dashArray: '4, 4',
+                }}
+              />
+            )}
+          </>
+        )}
 
-      {/* Source, Destination, and Waypoints */}
-      {source && <MapMarker position={source} icon={sourceIcon} zIndexOffset={800} popup="<strong>📍 Source</strong><br/>Start location" />}
-      {destination && <MapMarker position={destination} icon={destIcon} zIndexOffset={800} popup="<strong>🎯 Destination</strong><br/>End location" />}
-      {waypoints.map((wp, i) => (
-        <MapMarker key={i} position={wp} icon={waypointIcon(i + 1)} zIndexOffset={750} popup={`<strong>🟣 Waypoint #${i + 1}</strong><br/>Delivery stop`} />
-      ))}
+        {/* Source, Destination, and Waypoints */}
+        {source && <MapMarker position={source} icon={sourceIcon} zIndexOffset={800} popup="<strong>📍 Source</strong><br/>Start location" />}
+        {destination && <MapMarker position={destination} icon={destIcon} zIndexOffset={800} popup="<strong>🎯 Destination</strong><br/>End location" />}
+        {waypoints.map((wp, i) => (
+          <MapMarker key={i} position={wp} icon={waypointIcon(i + 1)} zIndexOffset={750} popup={`<strong>🟣 Waypoint #${i + 1}</strong><br/>Delivery stop`} />
+        ))}
 
-      {/* Road Blockages */}
-      {blockedCoords.map((coord, i) => (
-        <MapMarker
-          key={i}
-          position={coord}
-          icon={L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="width: 28px; height: 28px; background: #f43f5e; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 3px 12px #f43f5e88; color: white;">✕</div>`,
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
-          })}
-          zIndexOffset={850}
-          popup="<strong>⛔ Road Blockage</strong><br/>Route dynamically detoured around this point"
-        />
-      ))}
+        {/* Road Blockages */}
+        {blockedCoords.map((coord, i) => (
+          <MapMarker
+            key={i}
+            position={coord}
+            icon={L.divIcon({
+              className: 'custom-marker',
+              html: `<div style="width: 28px; height: 28px; background: #f43f5e; border-radius: 50%; border: 3px solid white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; box-shadow: 0 3px 12px #f43f5e88; color: white;">✕</div>`,
+              iconSize: [28, 28],
+              iconAnchor: [14, 14],
+            })}
+            zIndexOffset={850}
+            popup="<strong>⛔ Road Blockage</strong><br/>Route dynamically detoured around this point"
+          />
+        ))}
 
-      {/* Route Polyline */}
-      {route && route.segments.length > 0 && (
-        <RouteLayer
-          coords={route.segments.flatMap((s) => s.coords)}
-          color="#6366f1"
-          weight={6}
-          opacity={0.9}
-          layerId="merged"
-        />
-      )}
+        {/* Route Polyline */}
+        {route && route.segments.length > 0 && (
+          <RouteLayer
+            coords={route.segments.flatMap((s) => s.coords)}
+            color="#6366f1"
+            weight={6}
+            opacity={0.9}
+            layerId="merged"
+          />
+        )}
 
-      {/* Active Live Vehicle Marker */}
-      {liveTracking?.currentCoord && (liveTracking.isActive || liveTracking.isPaused || liveTracking.isCompleted) && (
-        <LiveVehicleMarker
-          coord={liveTracking.currentCoord}
-          heading={liveTracking.heading}
-          vehicle={vehicle}
-          cameraFollow={liveTracking.cameraFollow}
-        />
-      )}
-    </MapContainer>
-  )
-}
+        {/* Active Live Vehicle Marker */}
+        {liveTracking?.currentCoord && (liveTracking.isActive || liveTracking.isPaused || liveTracking.isCompleted) && (
+          <LiveVehicleMarker
+            coord={liveTracking.currentCoord}
+            heading={liveTracking.heading}
+            vehicle={vehicle}
+            cameraFollow={liveTracking.cameraFollow}
+          />
+        )}
+      </MapContainer>
+      </div>
+    )
+  }

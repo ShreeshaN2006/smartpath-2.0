@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import 'leaflet/dist/leaflet.css'
+import L from 'leaflet'
 import { Link } from 'react-router-dom'
 import { MapView } from '../components/map/MapView'
 import { MapToolbar } from '../components/map/MapToolbar'
@@ -7,16 +8,18 @@ import { RouteControls } from '../components/routing/RouteControls'
 import { RouteResultCard, RouteComparison } from '../components/routing/RouteResultCard'
 import { WeatherCard, IncidentCard, TrafficCard } from '../components/intelligence/IntelligenceCards'
 import { LiveTrackingHUD } from '../components/navigation/LiveTrackingHUD'
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Tabs } from '../components/ui/Tabs'
+import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { useToast } from '../components/ui/Toast'
 import { useQuery } from '@tanstack/react-query'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useLiveTracking } from '../hooks/useLiveTracking'
 import { api } from '../lib/api'
-import { cn } from '../lib/utils'
-import type { Coordinates, RouteResponse, VehicleType, RoutingMode, RouteExplanation, MapLayerType } from '../types'
-import { Navigation, AlertTriangle, Layers, MapPin, LocateFixed, Play } from 'lucide-react'
+import { cn, formatDuration, formatDistance } from '../lib/utils'
+import type { Coordinates, RouteResponse, VehicleType, RoutingMode, WeatherData, Incident, TrafficData, RouteExplanation, MapLayerType } from '../types'
+import { Navigation, AlertTriangle, ChevronLeft, ChevronRight, Layers, Settings, Download, Share2, MapPin, LocateFixed, Play, Sparkles, RotateCcw, Gauge } from 'lucide-react'
 
 const DEFAULT_CENTER: Coordinates = { lat: 12.9716, lng: 77.5946 }
 const DEFAULT_ZOOM = 13
@@ -256,13 +259,16 @@ export function PlannerPage() {
     { mode: 'blockage' as const, label: 'Add Blockage', icon: <AlertTriangle className="w-4 h-4 text-amber-600" /> },
   ]
 
+  const trafficState = trafficMultiplier <= 1.5 ? 'Normal' : trafficMultiplier <= 2.5 ? 'Moderate' : trafficMultiplier <= 3.5 ? 'Heavy' : 'Severe'
+  const trafficStateVariant = trafficMultiplier <= 1.5 ? 'success' : trafficMultiplier <= 2.5 ? 'warning' : trafficMultiplier <= 3.5 ? 'danger' : 'danger'
+
   return (
     <div className="h-screen flex flex-col bg-neutral-50">
       {/* App Header */}
-      <header className="h-14 bg-white border-b border-neutral-200 flex items-center justify-between px-6 z-20">
+      <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 z-20">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-xs">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-primary to-brand-secondary flex items-center justify-center shadow-xs">
               <Navigation className="w-5 h-5 text-white" />
             </div>
             <span className="text-heading-m font-bold bg-gradient-to-r from-brand-primary to-brand-secondary bg-clip-text text-transparent">
@@ -291,7 +297,7 @@ export function PlannerPage() {
           {/* Real-time GPS status indicator */}
           <button
             onClick={handleLocateMe}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all hover:border-brand-primary/40 bg-neutral-50 text-neutral-700"
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all hover:border-brand-primary/40 bg-white text-neutral-700"
           >
             <LocateFixed className={cn('w-3.5 h-3.5', isLocatingGps ? 'animate-spin text-brand-primary' : 'text-emerald-600')} />
             {gpsPosition ? `GPS: ±${gpsPosition.accuracy}m` : 'Locate GPS'}
@@ -393,7 +399,7 @@ export function PlannerPage() {
           )}
 
           {/* Floating Route Details & Intelligence Panel */}
-          <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:w-96 max-h-[75vh] overflow-y-auto z-[1000] shadow-2xl rounded-2xl bg-white/95 backdrop-blur-md border border-neutral-200/90">
+          <div className="absolute bottom-4 left-4 right-4 md:left-auto md:right-4 md:bottom-4 md:top-auto md:w-96 max-h-[75vh] overflow-y-auto z-[1000] shadow-2xl rounded-2xl bg-white/95 backdrop-blur-md border border-neutral-200/90">
             <Tabs defaultTab={activeTab} onChange={(tabId: string) => setActiveTab(tabId)} tabs={[
               { id: 'metrics', label: 'Route Details' },
               { id: 'intelligence', label: 'Intelligence' },

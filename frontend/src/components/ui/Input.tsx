@@ -1,7 +1,7 @@
-import { forwardRef, HTMLAttributes } from 'react'
+import { forwardRef, InputHTMLAttributes } from 'react'
 import { cn } from '../../lib/utils'
 
-interface InputProps extends HTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string
   error?: string
   icon?: React.ReactNode
@@ -14,7 +14,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={inputId} className="block text-sm font-medium text-neutral-700 mb-1.5">
+          <label htmlFor={inputId} className="block text-xs font-semibold uppercase tracking-wider text-neutral-500 mb-1.5">
             {label}
           </label>
         )}
@@ -28,7 +28,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full rounded-lg border bg-white text-neutral-900 placeholder:text-neutral-400',
+              'w-full rounded-xl border bg-white text-neutral-900 placeholder:text-neutral-400',
               'focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary',
               'disabled:bg-neutral-100 disabled:cursor-not-allowed',
               'transition-colors duration-200',
@@ -46,6 +46,3 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 )
 
 Input.displayName = 'Input'
-
-
-

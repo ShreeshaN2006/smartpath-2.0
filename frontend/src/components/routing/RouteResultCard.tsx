@@ -1,18 +1,7 @@
-import {
-  Shield,
-  Clock,
-  Zap,
-  MapPin,
-  CheckCircle,
-  Info,
-  Leaf,
-  Navigation,
-  Compass,
-  ArrowRight
-} from 'lucide-react'
-import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card'
-import { Badge } from '../ui/Badge'
-import { Button } from '../ui/Button'
+import { MapPin, Shield, Clock, Zap, CheckCircle, XCircle, Info, AlertTriangle } from 'lucide-react'
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import { Badge } from '../../components/ui/Badge'
+import { Button } from '../../components/ui/Button'
 import { cn, formatDuration, formatDistance, formatRiskScore, getRiskColor } from '../../lib/utils'
 import type { RouteResponse, RouteExplanation } from '../../types'
 
@@ -24,130 +13,100 @@ interface RouteResultCardProps {
   isLoading?: boolean
 }
 
-export function RouteResultCard({
-  route,
-  explanation,
-  onUseRoute,
-  onViewAlternatives,
-  isLoading,
-}: RouteResultCardProps) {
+export function RouteResultCard({ route, explanation, onUseRoute, onViewAlternatives, isLoading }: RouteResultCardProps) {
   if (!route) {
     return (
-      <div className="p-8 text-center text-slate-500 space-y-3">
-        <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto text-indigo-500 border border-indigo-100 shadow-sm">
-          <Navigation className="w-7 h-7" />
-        </div>
-        <div>
-          <h3 className="font-bold text-slate-800 text-sm">No Route Active</h3>
-          <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-            Click <strong>Set Source</strong> & <strong>Set Destination</strong> on the map, or tap <strong>⚡ Load Sample Route</strong> to calculate instant optimal path.
-          </p>
-        </div>
-      </div>
+      <Card className="h-full">
+        <CardContent className="flex items-center justify-center h-full min-h-[200px]">
+          <div className="text-center text-neutral-500">
+            <Info className="w-12 h-12 mx-auto mb-4 text-neutral-300" />
+            <p className="text-body-m">Select origin and destination to calculate a route</p>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
-  const { level: riskLevel } = formatRiskScore(route.risk_score)
-  const co2SavedKg = Number((route.distance_km * 0.08).toFixed(2))
+  const { level: riskLevel, color: riskColor } = formatRiskScore(route.risk_score)
+  const riskBg = getRiskColor(route.risk_score)
 
   return (
-    <div className="p-4 space-y-4">
-      {/* Route Header Banner */}
-      <div className="flex items-center justify-between gap-2 pb-2 border-b border-neutral-100">
-        <div>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 font-mono">
-            Optimal Routing Decision
-          </span>
-          <h3 className="text-base font-bold text-slate-900 font-heading">Recommended Corridor</h3>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-heading-m">Recommended Route</CardTitle>
+          <Badge variant={riskLevel.toLowerCase() === 'very low' || riskLevel.toLowerCase() === 'low' ? 'success' : riskLevel.toLowerCase() === 'medium' ? 'warning' : 'danger'}>
+            {riskLevel} Risk
+          </Badge>
         </div>
-        <Badge
-          variant={
-            riskLevel.toLowerCase().includes('low')
-              ? 'success'
-              : riskLevel.toLowerCase() === 'medium'
-              ? 'warning'
-              : 'danger'
-          }
-          className="font-bold text-xs capitalize"
-        >
-          {riskLevel} Risk
-        </Badge>
-      </div>
+      </CardHeader>
 
-      {/* Main Metrics: Distance, ETA, Reliability */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 font-mono">Distance</p>
-          <p className="text-lg font-black text-slate-900 font-mono mt-0.5">{formatDistance(route.distance_km)}</p>
+      <CardContent className="flex-1 space-y-4">
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-3 bg-neutral-50 rounded-xl">
+            <p className="text-caption text-neutral-500 uppercase tracking-wider">Distance</p>
+            <p className="text-heading-s font-bold text-brand-primary">{formatDistance(route.distance_km)}</p>
+          </div>
+          <div className="text-center p-3 bg-neutral-50 rounded-xl">
+            <p className="text-caption text-neutral-500 uppercase tracking-wider">ETA</p>
+            <p className="text-heading-s font-bold text-brand-secondary">{formatDuration(route.eta_min)}</p>
+          </div>
+          <div className="text-center p-3 bg-neutral-50 rounded-xl">
+            <p className="text-caption text-neutral-500 uppercase tracking-wider">Reliability</p>
+            <p className="text-heading-s font-bold text-success">{Math.round(route.reliability_score * 100)}%</p>
+          </div>
         </div>
-        <div className="p-3 bg-emerald-50/60 rounded-2xl border border-emerald-100 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 font-mono">ETA</p>
-          <p className="text-lg font-black text-slate-900 font-mono mt-0.5">{formatDuration(route.eta_min)}</p>
-        </div>
-        <div className="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 text-center">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600 font-mono">Reliability</p>
-          <p className="text-lg font-black text-purple-700 font-mono mt-0.5">{Math.round(route.reliability_score * 100)}%</p>
-        </div>
-      </div>
 
-      {/* AI Risk & Eco Score */}
-      <div className="space-y-2 p-3 bg-neutral-50 rounded-2xl border border-neutral-100 text-xs">
-        <div className="flex justify-between items-center">
-          <span className="font-semibold text-slate-700 flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-indigo-500" />
-            Safety & Disruption Index
-          </span>
-          <span className="font-mono font-bold text-slate-900">{route.risk_score.toFixed(2)}</span>
-        </div>
-        <div className="h-2 bg-neutral-200 rounded-full overflow-hidden">
-          <div
-            className={cn('h-full transition-all duration-500', getRiskColor(route.risk_score))}
-            style={{ width: `${Math.max(5, route.risk_score * 100)}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
-          <span className="flex items-center gap-1 text-emerald-600 font-medium">
-            <Leaf className="w-3.5 h-3.5" /> ~{co2SavedKg}kg CO₂ saved
-          </span>
-          <span className="font-mono text-slate-400">
-            Engine: {route.algorithm.replace('_', ' ')}
-          </span>
-        </div>
-      </div>
+        <div className="space-y-3">
+          <div>
+            <div className="flex items-center justify-between text-sm mb-1">
+              <span className="font-medium text-neutral-700">Risk Score</span>
+              <span className="font-mono text-brand-primary">{route.risk_score.toFixed(2)}</span>
+            </div>
+            <div className="h-2 bg-neutral-200 rounded-full overflow-hidden">
+              <div
+                className={cn('h-full transition-all duration-500', riskBg)}
+                style={{ width: `${route.risk_score * 100}%` }}
+              />
+            </div>
+          </div>
 
-      {/* Why this route factors */}
-      {explanation && (
-        <div className="space-y-2 border-t border-neutral-100 pt-3">
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">Intelligence Insights</h4>
-          <ul className="space-y-1.5">
-            {explanation.factors.map((factor, i) => (
-              <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
-                <span>{factor.description}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-xl">
+              <Clock className="w-4 h-4 text-neutral-500" />
+              <span className="text-neutral-600">Algorithm: <span className="font-mono text-brand-primary capitalize">{route.algorithm.replace('_', ' ')}</span></span>
+            </div>
+            <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded-xl">
+              <Shield className="w-4 h-4 text-neutral-500" />
+              <span className="text-neutral-600">Data: <span className="font-mono text-brand-primary capitalize">{route.data_quality.traffic}</span> traffic</span>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Navigation Buttons */}
-      <div className="flex gap-2 pt-2 border-t border-neutral-100">
-        <Button
-          onClick={onUseRoute}
-          className="flex-1 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md gap-1.5 text-xs py-2.5"
-        >
-          <Navigation className="w-3.5 h-3.5" />
-          Start Navigation
-        </Button>
-        <Button
-          variant="outline"
-          onClick={onViewAlternatives}
-          className="flex-1 text-xs py-2.5 font-semibold"
-        >
-          Compare Options
-        </Button>
-      </div>
-    </div>
+        {explanation && (
+          <div className="border-t border-neutral-200 pt-4 space-y-2">
+            <h4 className="font-semibold text-neutral-900">Why this route?</h4>
+            <ul className="space-y-1.5">
+              {explanation.factors.map((factor, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-neutral-600">
+                  <CheckCircle className="w-4 h-4 text-success flex-shrink-0 mt-0.5" />
+                  <span>{factor.description}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex gap-2 pt-2 border-t border-neutral-200">
+          <Button onClick={onUseRoute} className="flex-1" size="lg">
+            Use This Route
+          </Button>
+          <Button variant="outline" onClick={onViewAlternatives} className="flex-1" size="lg">
+            View Alternatives
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -157,75 +116,55 @@ interface RouteComparisonProps {
 }
 
 export function RouteComparison({ comparison, onSelectRoute }: RouteComparisonProps) {
-  if (!comparison) {
-    return (
-      <div className="p-6 text-center text-xs text-slate-400">
-        Calculate a route to compare algorithms.
-      </div>
-    )
-  }
+  if (!comparison) return null
 
   const routes = [
-    { key: 'recommended', ...comparison.recommended, label: 'Recommended (Balanced)' },
-    { key: 'fastest', ...comparison.fastest, label: 'Fastest (High Congestion)' },
-    { key: 'safest', ...comparison.safest, label: 'Safest (Low Disruption)' },
+    { key: 'recommended', ...comparison.recommended, label: 'Recommended' },
+    { key: 'fastest', ...comparison.fastest, label: 'Fastest' },
+    { key: 'safest', ...comparison.safest, label: 'Safest' },
   ]
 
   return (
-    <div className="p-3 space-y-3">
-      <div className="flex items-center justify-between pb-1 border-b border-neutral-100">
-        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 font-mono">
-          Route Alternatives
-        </h4>
-        <span className="text-[11px] text-indigo-600 font-semibold">Multi-objective</span>
-      </div>
-
-      <div className="space-y-2">
-        {routes.map((r) => (
-          <div
-            key={r.key}
-            className={cn(
-              'p-3 rounded-2xl border transition-all',
-              r.key === 'recommended'
-                ? 'bg-indigo-50/50 border-indigo-200/80 shadow-xs'
-                : 'bg-neutral-50 border-neutral-200/60 hover:bg-white'
-            )}
-          >
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs font-bold text-slate-900">{r.label}</span>
-              <Badge
-                variant={r.risk_level.includes('low') ? 'success' : r.risk_level === 'medium' ? 'warning' : 'danger'}
-                size="sm"
-                className="text-[10px] capitalize"
-              >
-                {r.risk_level.replace('_', ' ')}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center text-xs my-2 py-1.5 bg-white/80 rounded-xl border border-neutral-100">
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-mono">ETA</p>
-                <p className="font-mono font-bold text-slate-800">{formatDuration(r.eta_min)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-mono">Dist</p>
-                <p className="font-mono font-bold text-slate-800">{formatDistance(r.distance_km)}</p>
-              </div>
-              <div>
-                <p className="text-[10px] text-slate-400 uppercase font-mono">Reliability</p>
-                <p className="font-mono font-bold text-emerald-600">{Math.round(r.reliability * 100)}%</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => onSelectRoute(r.key as 'recommended' | 'fastest' | 'safest')}
-              className="w-full text-xs font-semibold py-1 rounded-lg bg-neutral-200/60 hover:bg-indigo-600 hover:text-white transition-colors"
-            >
-              Select Policy
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-heading-m">Route Comparison</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-neutral-500 text-caption uppercase tracking-wider border-b border-neutral-200">
+                <th className="pb-2">Route</th>
+                <th className="pb-2 text-right">ETA</th>
+                <th className="pb-2 text-right">Distance</th>
+                <th className="pb-2 text-right">Risk</th>
+                <th className="pb-2 text-right">Reliability</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-100">
+              {routes.map((r) => (
+                <tr key={r.key} className={cn(r.key === 'recommended' && 'bg-brand-primary/5')}>
+                  <td className="py-3 font-medium text-neutral-900">{r.label}</td>
+                  <td className="py-3 text-right font-mono text-brand-primary">{formatDuration(r.eta_min)}</td>
+                  <td className="py-3 text-right font-mono text-brand-secondary">{formatDistance(r.distance_km)}</td>
+                  <td className="py-3 text-right">
+                    <Badge variant={r.risk_level.includes('low') ? 'success' : r.risk_level === 'medium' ? 'warning' : 'danger'} size="sm">
+                      {r.risk_level.replace('_', ' ')}
+                    </Badge>
+                  </td>
+                  <td className="py-3 text-right font-mono text-success">{Math.round(r.reliability * 100)}%</td>
+                  <td className="py-3 text-right">
+                    <Button variant="ghost" size="sm" onClick={() => onSelectRoute(r.key as 'recommended' | 'fastest' | 'safest')}>
+                      Select
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
