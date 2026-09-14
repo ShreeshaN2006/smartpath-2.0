@@ -1,0 +1,47 @@
+# Ignore backend Python files
+backend/
+*.py
+requirements.txt
+pyproject.toml
+pytest.ini
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# Ignore ML models and data
+models/
+data/
+*.pt
+*.pkl
+*.npz
+
+# Ignore IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Ignore git
+.git/
+.gitignore
+
+# Ignore deployment configs for other platforms
+render.yaml
+railway.toml
+fly.toml
+Dockerfile
+.dockerignore
+
+# Ignore documentation
+*.md
+docs/
+
+# Ignore test results
+results/
+*.png
+*.npz
+
+# Keep only frontend
+!frontend/
