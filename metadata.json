@@ -1,0 +1,10 @@
+{
+  "name": "Remix SmartPath",
+  "description": "Emergency response and first-responder route intelligence system for Bengaluru. Rapid incident response, risk-aware navigation, and real-time obstacle evasion.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
