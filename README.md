@@ -29,28 +29,30 @@ It uses the **D\* Lite pathfinding algorithm** with real-time hazard avoidance, 
 | **Node.js** | 18+ | `node --version` |
 | **npm** | 9+ | `npm --version` |
 
-### Step 1 — Install Dependencies
+### Step 1 — Clone & Install
 
 ```bash
-cd "C:\Users\Admin\Desktop\smartpath prototype"
+git clone https://github.com/ShreeshaN2006/smartpath-2.0.git
+cd smartpath-2.0
 npm install
 ```
 
-### Step 2 — Configure Environment
+### Step 2 — Configure Environment (optional)
 
 Copy the example env file and add your API keys:
 
 ```bash
-copy .env.example .env
+cp .env.example .env          # macOS / Linux
+Copy-Item .env.example .env   # Windows (PowerShell)
 ```
 
 Then edit `.env` and set your keys:
 
 ```env
-# Required — Get yours at https://aistudio.google.com/apikey
+# Optional — powers Gemini AI traffic predictions (get yours at https://aistudio.google.com/apikey)
 GEMINI_API_KEY="your-gemini-api-key-here"
 
-# Optional — For Google Maps satellite view
+# Optional — enables the Google Maps satellite view
 VITE_GOOGLE_MAPS_API_KEY="your-google-maps-key-here"
 ```
 
@@ -81,7 +83,7 @@ Open **[http://localhost:3000](http://localhost:3000)** in your browser.
 ## 🏗️ Project Architecture
 
 ```
-smartpath prototype/
+smartpath-2.0/
 ├── public/                          # Static assets
 ├── src/
 │   ├── App.tsx                      # Main application — state management & orchestration
@@ -195,6 +197,28 @@ smartpath prototype/
 2. Enable Maps JavaScript API
 3. Create credentials → API Key
 4. Add to `.env`: `VITE_GOOGLE_MAPS_API_KEY="your-key"`
+
+---
+
+## ☁️ Deploy on Render
+
+The repo ships a [`render.yaml`](render.yaml) blueprint, so Render can build it as a static site with no manual configuration.
+
+### Blueprint deploy (recommended)
+
+1. Open the [Render Dashboard](https://dashboard.render.com/) → **New** → **Blueprint**
+2. Connect the `ShreeshaN2006/smartpath-2.0` repository
+3. Click **Apply** — Render reads `render.yaml`, runs `npm ci && npm run build`, and publishes `dist/`
+
+### Manual static site
+
+| Setting | Value |
+|---------|-------|
+| **Build Command** | `npm ci && npm run build` |
+| **Publish Directory** | `dist` |
+| **Rewrite Rule** | `/*` → `/index.html` |
+
+> **Note on API keys when deploying:** `vite.config.ts` deliberately exposes `GEMINI_API_KEY` to the browser, so any Gemini key you set on a public deployment is bundled into the client JavaScript and readable by anyone. Leave it unset on public hosting — the app falls back to the bundled pre-trained traffic model. `VITE_GOOGLE_MAPS_API_KEY` is expected to be public; restrict it by HTTP referrer in Google Cloud Console.
 
 ---
 
